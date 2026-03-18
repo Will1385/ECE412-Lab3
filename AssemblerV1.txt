@@ -71,7 +71,7 @@ Mega328P_Init:
 		
 		;initialize ADC - covered in Part 2 by Kang
 		ldi	r16,0xE7		//Enables ADC and enables auto trigger
-		sts	ADCSRA,r16		//ADCSRA = r16 = 0xE7 = 11100111
+		sts	ADCSRA,r16		//ADCSRA = r16 = 0xE7 = 11100111. This turns on autotrigger for free running mode
 						//Enables ADC and set the ADC division factor to 128 (p354).
 		ldi	r16,0x40		//r16 = 0x40
 		sts	ADMUX,r16		//ADMUX = r16 = 0x40
