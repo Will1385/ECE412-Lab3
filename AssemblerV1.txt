@@ -1,0 +1,254 @@
+ // Lab3P1.s
+ //
+ // 
+ // Author : Eugene Rockey
+ // Copyright 2026, All Rights Reserved
+ 
+.section ".data"					//student comment here
+.equ	DDRB,0x04					//student comment here
+.equ	DDRD,0x0A					//student comment here
+.equ	PORTB,0x05					//student comment here
+.equ	PORTD,0x0B					//student comment here
+.equ	U2X0,1						//student comment here
+.equ	UBRR0L,0xC4					//student comment here
+.equ	UBRR0H,0xC5					//student comment here
+.equ	UCSR0A,0xC0					//student comment here
+.equ	UCSR0B,0xC1					//student comment here
+.equ	UCSR0C,0xC2					//student comment here
+.equ	UDR0,0xC6					//student comment here
+.equ	RXC0,0x07					//student comment here
+.equ	UDRE0,0x05					//student comment here
+.equ	ADCSRA,0x7A					//student comment here
+.equ	ADMUX,0x7C					//student comment here
+.equ	ADCSRB,0x7B					//student comment here
+.equ	DIDR0,0x7E					//student comment here
+.equ	DIDR1,0x7F					//student comment here
+.equ	ADSC,6						//student comment here
+.equ	ADIF,4						//student comment here
+.equ	ADCL,0x78					//student comment here
+.equ	ADCH,0x79					//student comment here
+.equ	EECR,0x1F					//student comment here
+.equ	EEDR,0x20					//student comment here
+.equ	EEARL,0x21					//student comment here
+.equ	EEARH,0x22					//student comment here
+.equ	EERE,0						//student comment here
+.equ	EEPE,1						//student comment here
+.equ	EEMPE,2						//student comment here
+.equ	EERIE,3						//student comment here
+
+.global HADC				//student comment here
+.global LADC				//student comment here
+.global ASCII				//the memory variable that stores a character to be handled by USART DD
+.global DATA				//student comment here
+
+.set	temp,0				//student comment here
+
+.section ".text"			//student comment here
+.global Mega328P_Init
+Mega328P_Init:
+		;PB0(R*W),PB1(RS),PB2(E) as fixed outputs
+		ldi	r16,0x07		//r16 = 0x07
+		out	DDRB,r16		//DDRB = r16 = 0x07 = 00000111
+						//Each bit represents one of the Port B (PB) registers.
+						//This sets this three lowest bits to 1, which correspondingly sets PB0-PB2 as output (p122)
+		ldi	r16,0			//r16 = 0
+		out	PORTB,r16		//PORTB = r16 = 0
+						//Sets all PB registers to driven low (p121)
+		;initialize UART, 8bits, no parity, 1 stop, 9600
+		out	U2X0,r16		//U2X0 = r16 = 0; sets USART to asynchronous normal mode
+		ldi	r17,0x0			//r17 = 0
+		ldi	r16,0x67		//r16 = 0x67
+		sts	UBRR0H,r17		//UBRR0H = r17 = 0
+		sts	UBRR0L,r16		//UBRR0L = r16 = 0x67
+						//Combined, this makes UBRR0 0x0067=103.
+						//The baud rate formula is 16*10^6/(16(UBRR0+1)). So in this case, the buad rate is 9600. (p264)
+		ldi	r16,24			//r16 = 24
+		sts	UCSR0B,r16		//UCSR0B = r16 = 24 = 00011000
+						//This enables RXEN0 and TXEN0, which is the reciever and transmitter (p285)
+		ldi	r16,6			//r16 = 6
+		sts	UCSR0C,r16		//UCSR0C = r16 = 6 = 00000110
+						//Sets the data size to 8 bits, parity to none, and 1 stop bit (p288)
+		
+		;initialize ADC - covered in Part 2 by Kang
+		ldi	r16,0xE7		//Enables ADC and enables auto trigger
+		sts	ADCSRA,r16		//ADCSRA = r16 = 0xE7 = 11100111
+						//Enables ADC and set the ADC division factor to 128 (p354).
+		ldi	r16,0x40		//r16 = 0x40
+		sts	ADMUX,r16		//ADMUX = r16 = 0x40
+		ldi	r16,0			//r16 = 0
+		sts	ADCSRB,r16		//ADCSRB = r16 = 0
+		ldi	r16,0xFE		//r16 = 0xFE
+		sts	DIDR0,r16		//DIDR0 = r16 = oxFE
+		ldi	r16,0xFF		//r16 = 0xFF
+		sts 	DIDR1,r16		//DIDR1 = r16 = 0xFF
+		ret				//return
+.global UART_Init
+UART_Init:
+    ; Set asynchronous normal mode (U2X0 = 0)
+		ldi     r16,0			//r16 = 0
+		out	U2X0,r16		//U2X0 = r16 = 0; sets USART to asynchronous normal mode		
+		
+    ; Set baud rate to 4800 (UBRR = 207 = 0x00CF)
+		ldi     r17,0x00		//r17=0
+		ldi     r16,0xCF		//r16=0xCF
+		sts     UBRR0H,r17		//UBRR0H = r17 = 0
+		sts     UBRR0L,r16		//UBRR0L = r16 = 0xCF
+						//Combined, this makes UBRR0 0x00CF = 207.
+						//The baud rate formula is 16*10^6/(16(UBRR0+1)). So in this case, the buad rate is 4800. (p264)
+
+    ; Enable RX and TX
+		ldi     r16,24			//00011000 (RXEN0 + TXEN0)
+		sts     UCSR0B,r16		//UCSR0B = r16 = 24 = 00011000
+						//This enables RXEN0 and TXEN0, which is the reciever and transmitter (p285)	
+
+    ; Set frame format: 7 data bits, odd parity, 2 stop bits
+		ldi     r16,0x3C		//r16=0x3C=00111100
+		sts     UCSR0C,r16		//Sets the data size to 7 bits, parity to odd, and 2 stop bits (p288)
+
+		ret
+		
+		
+    
+.global LCD_Write_Command
+LCD_Write_Command:
+	call		UART_Off		//student comment here
+	ldi		r16,0xFF		;PD0 - PD7 as outputs
+	out		DDRD,r16		//student comment here
+	lds		r16,DATA		//student comment here
+	out		PORTD,r16		//student comment here
+	ldi		r16,4			//student comment here
+	out		PORTB,r16		//student comment here
+	call		LCD_Delay		//student comment here
+	ldi		r16,0			//student comment here
+	out		PORTB,r16		//student comment here
+	call		LCD_Delay		//student comment here
+	call		UART_On			//student comment here
+	ret						//student comment here
+
+LCD_Delay:
+	ldi		r16,0xFA			//student comment here
+D0:	ldi		r17,0xFF			//student comment here
+D1:	dec		r17				//student comment here
+	brne		D1				//student comment here
+	dec		r16				//student comment here
+	brne		D0				//student comment here
+	ret						//student comment here
+
+.global LCD_Write_Data
+LCD_Write_Data:
+	call		UART_Off		//student comment here
+	ldi		r16,0xFF		//student comment here
+	out		DDRD,r16		//student comment here
+	lds		r16,DATA		//student comment here
+	out		PORTD,r16		//student comment here
+	ldi		r16,6			//student comment here
+	out		PORTB,r16		//student comment here
+	call		LCD_Delay		//student comment here
+	ldi		r16,0			//student comment here
+	out		PORTB,r16		//student comment here
+	call		LCD_Delay		//student comment here
+	call		UART_On			//student comment here
+	ret					//student comment here
+
+.global LCD_Read_Data
+LCD_Read_Data:
+	call		UART_Off		//student comment here
+	ldi		r16,0x00		//student comment here
+	out		DDRD,r16		//student comment here
+	out		PORTB,4			//student comment here
+	in		r16,PORTD		//student comment here
+	sts		DATA,r16		//student comment here
+	out		PORTB,0			//student comment here
+	call		UART_On			//student comment here
+	ret					//student comment here
+
+.global UART_On						//Enable TX/RX
+UART_On:
+	ldi		r16,2				//r16 = 2
+	out		DDRD,r16			//DDRD = r16 = 2 = 00000010
+							//Each bit represents one of the Port D (PD) registers.
+							//This sets PD1 to output (p128), which is the USART TX
+	ldi		r16,24				//r16 = 24
+	sts		UCSR0B,r16			//UCSR0B = r16 = 24 = 00011000
+							//This enables RXEN0 and TXEN0, which is the reciever and transmitter (p285)
+	ret						//return
+
+.global UART_Off					//Disable TX/RX
+UART_Off:
+	ldi	r16,0					//r16 = 0
+	sts	UCSR0B,r16				//UCSR0B = r16 = 0
+							//This disables RXEN0 and TXEN0, which is the reciever and transmitter (p285)
+	ret						//return
+
+.global UART_Clear					//Empty the USART buffer
+UART_Clear:
+	lds		r16,UCSR0A			//r16 = UCSR0A
+	sbrs		r16,RXC0			//Skip the return if the RXC bit in UCSR0A is tripped.
+							//Which means, return unless there is unread data in USART buffer (p283)
+	ret						//Return only if no unread data in USART buffer
+	lds		r16,UDR0			//r16 = UDR0 (which is the USART buffer)
+	rjmp		UART_Clear			//call this instruction again after clearing USART buffer
+
+.global UART_Get					//Wait for incoming USART data
+UART_Get:
+	lds		r16,UCSR0A			//r16 = UCSR0A
+	sbrs		r16,RXC0			//Skip the rjmp if the RXC bit in UCSR0A is tripped.
+							//Which means, jump unless there is unread data in USART buffer (p283)
+	rjmp		UART_Get			//call this instruction again if there is no unread data in USART buffer
+	lds		r16,UDR0			//r16 = UDR0 (which is the USART buffer)
+	sts		ASCII,r16			//ASCII = r16 (ASCII is a character to be handled by USART)
+	ret						//return
+
+.global UART_Put					//Send data
+UART_Put:
+	lds		r17,UCSR0A			//r17 = UCSR0A
+	sbrs		r17,UDRE0			//Skip the rjmp if UDRE0 bit in UCSR0A is tripped.
+							//Which means, jump unless the USART buffer is empty (p283)
+	rjmp		UART_Put			//call this instruction again if the USART buffer has data in it
+	lds		r16,ASCII			//r16 = ASCII (ASCII is a character to be handled by USART)
+	sts		UDR0,r16			//UDR0 = r16
+	ret						//return
+
+.global ADC_Get
+ADC_Get:
+		lds		r16,ADCL		//Reads low byte of ADC
+		sts		LADC,r16		//Loads value in ADC Low Register
+		lds		r16,ADCH		//Reads High Byte of ADC
+		sts		HADC,r16		//Loads value into ADC High register
+		ret
+
+.global EEPROM_Write
+EEPROM_Write:      
+		sbic		EECR,EEPE
+		rjmp		EEPROM_Write			; Wait for completion of previous write
+		ldi		r18,0x00			; Set up address (r18:r17) in address register
+		ldi		r17,0x05 
+		ldi		r16,'F'				; Set up data in r16    
+		out		EEARH, r18      
+		out		EEARL, r17			      
+		out		EEDR,r16			; Write data (r16) to Data Register  
+		sbi		EECR,EEMPE			; Write logical one to EEMPE
+		sbi		EECR,EEPE			; Start eeprom write by setting EEPE
+		ret 
+
+.global EEPROM_Read
+EEPROM_Read:					    
+		sbic		EECR,EEPE    
+		rjmp		EEPROM_Read		; Wait for completion of previous write
+		ldi		r18,0x00		; Set up address (r18:r17) in EEPROM address register
+		ldi		r17,0x05
+		ldi		r16,0x00   
+		out		EEARH, r18   
+		out		EEARL, r17		   
+		sbi		EECR,EERE		; Start eeprom read by writing EERE
+		in		r16,EEDR		; Read data from Data Register
+		sts		ASCII,r16  
+		ret
+
+
+		.end
+		
+.section .eeprom
+InitialByte:
+    .byte 'A'
+
