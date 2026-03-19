@@ -127,23 +127,23 @@ void ADC(void)
 {
 	ADC_Get();
 
-	Acc = (((int)(HADC & 0b11)) << 8) | ((int)LADC);
+	Acc = (((int)(HADC & 0b11)) << 8) | ((int)LADC); //Read the voltage of the thermistor
 
 	const float B  = 3950.0f;
 	const float T0 = 273.15f + 25.0f;
 	const float R0 = 10000.0f;
-	const float R_FIXED = 10000.0f;
+	const float R_FIXED = 10000.0f;	//initiating values for the resistors and temperature
 
 	if (Acc <= 0) Acc = 1;
-	if (Acc >= 1023) Acc = 1022;
+	if (Acc >= 1023) Acc = 1022; //Avoid overflow since it's 10 bit (1024 values) resolution
 
-	const float r_therm = (R_FIXED * ((float)Acc)) / (1024.0f - ((float)Acc));
+	const float r_therm = (R_FIXED * ((float)Acc)) / (1024.0f - ((float)Acc)); 
 
 	const float kelvin  = (B * T0) / (T0 * log(r_therm / R0) + B);
-	const float celsius = kelvin - 273.15f;
+	const float celsius = kelvin - 273.15f; //Equations given in lab 3 folder, to calculate Temperature in Celsius
 
 	int temp_int = (int)celsius;
-	int temp_frac = (int)((celsius - temp_int) * 100);
+	int temp_frac = (int)((celsius - temp_int) * 100); //Calculate the integer and fraction part of the temperature
 
 	if (celsius < 0) {
 		UART_Puts("\rTemperature: -");
@@ -151,7 +151,7 @@ void ADC(void)
 		temp_frac = -temp_frac;
 	} else {
 		UART_Puts("\rTemperature: ");
-	}
+	}	//Allow the program to show negative temperature
 
 	if (temp_int >= 10) {
 		ASCII = (temp_int / 10) + '0';
