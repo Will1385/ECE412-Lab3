@@ -215,7 +215,8 @@ ADC_Get:
 		sts		LADC,r16		//Loads value in ADC Low Register
 		lds		r16,ADCH		//Reads High Byte of ADC
 		sts		HADC,r16		//Loads value into ADC High register
-		ret						//Now this function will keep running to read the current volatge value
+		ret						//Return to ADC_Get
+								//Now this function will keep running to read the current volatge value
 
 .global EEPROM_Write
 EEPROM_Write:      
