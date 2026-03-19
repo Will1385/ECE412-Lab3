@@ -168,7 +168,7 @@ void ADC(void)
 	ASCII = (temp_frac % 10) + '0';
 	UART_Put();		//Print the number in second digit place
 
-	UART_Puts(" C   ");
+	UART_Puts(" C   "); //Print "C" as "Celsius"
 }
 
 // Helper to read a single hex character from the terminal
