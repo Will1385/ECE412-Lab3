@@ -170,6 +170,7 @@ void ADC(void)
 
 	UART_Puts(" C   "); //Print "C" as "Celsius"
 }
+//Each digit will be calculated, sent into ASCII encoder, then print out in order
 
 // Helper to read a single hex character from the terminal
 unsigned char Get_Hex_Digit(void) {
