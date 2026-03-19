@@ -155,18 +155,18 @@ void ADC(void)
 
 	if (temp_int >= 10) {
 		ASCII = (temp_int / 10) + '0';
-		UART_Put();
+		UART_Put();	//Print the number in tenths' place
 	}
 	ASCII = (temp_int % 10) + '0';
-	UART_Put();
+	UART_Put();  //Print the number in ones' place
 
 	ASCII = '.';
-	UART_Put();
+	UART_Put();	//print the decimal point
 
 	ASCII = (temp_frac / 10) + '0';
-	UART_Put();
+	UART_Put();		//Print the number in first digit place
 	ASCII = (temp_frac % 10) + '0';
-	UART_Put();
+	UART_Put();		//Print the number in second digit place
 
 	UART_Puts(" C   ");
 }
