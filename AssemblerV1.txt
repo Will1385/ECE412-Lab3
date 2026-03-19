@@ -70,7 +70,7 @@ Mega328P_Init:
 						//Sets the data size to 8 bits, parity to none, and 1 stop bit (p288)
 		
 		;initialize ADC - covered in Part 2 by Kang
-		ldi	r16,0xE7		//Enables ADC and enables auto trigger
+		ldi	r16,0xE7		//r16 = 0xE7
 		sts	ADCSRA,r16		//ADCSRA = r16 = 0xE7 = 11100111. Bit 5, ADATE, is activated. This turns on autotrigger for free running mode
 						//Enables ADC and set the ADC division factor to 128 (p354).
 		ldi	r16,0x40		//r16 = 0x40
@@ -78,9 +78,9 @@ Mega328P_Init:
 		ldi	r16,0			//r16 = 0
 		sts	ADCSRB,r16		//ADCSRB = r16 = 0. 0 = 00000000. ADTS[2:0] = 000 = free running
 		ldi	r16,0xFE		//r16 = 0xFE
-		sts	DIDR0,r16		//DIDR0 = r16 = oxFE
+		sts	DIDR0,r16		//DIDR0 = r16 = 0xFE. Disable ADC7-ADC1, keep ADC0 active
 		ldi	r16,0xFF		//r16 = 0xFF
-		sts 	DIDR1,r16		//DIDR1 = r16 = 0xFF
+		sts 	DIDR1,r16		//DIDR1 = r16 = 0xFF. Disable all bits in DIDR1
 		ret				//return
 .global UART_Init
 UART_Init:
