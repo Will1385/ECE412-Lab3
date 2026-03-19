@@ -15,7 +15,7 @@ const char MS5[] = "\r\nInvalid Command Try Again...";
 const char MS6[] = "Volts\r";
 const char MS7[] = "                  Group 6: Hussein, Will, Kang, Nakul                  ";
 
-unsigned long counter = 0;
+unsigned long counter = 0;		//Counter used for marquee
 unsigned int offset = 0;
 char message_view[17];
 
@@ -77,50 +77,45 @@ void HELP(void)					//Display available Tiny OS Commands on Terminal
 
 void LCD(void)
 {
-	const unsigned long COUNTER_MAX = 25000;
-	const unsigned char LCD_LINE_SIZE = 16;
-	const unsigned int OFFSET_MAX = strlen(MS7) - LCD_LINE_SIZE;
-	unsigned char i;
-
-	DATA = 0x34;
-	LCD_Write_Command();
-	DATA = 0x08;
-	LCD_Write_Command();
-	DATA = 0x02;
-	LCD_Write_Command();
-	DATA = 0x06;
-	LCD_Write_Command();
-	DATA = 0x0F;
-	LCD_Write_Command();
-    counter = 0;
-	while (counter <= 25052)
+	const unsigned long COUNTER_MAX = 25000;                        //Controls scrolling speed
+	const unsigned char LCD_LINE_SIZE = 16;                         //Total characters the LCD can display at once
+	const unsigned int OFFSET_MAX = strlen(MS7) - LCD_LINE_SIZE;    //Length that can be scrolled before reaching the end of LCD
+	unsigned char i;                                                //Variable for loop counter
+ 
+	DATA = 0x34;                                                    //initialization of display
+	LCD_Write_Command();                                            //Implements configuration
+    DATA = 0x08;                                                    //Turns display off to prevent flicking
+    LCD_Write_Command();                                            //Implements changes
+	DATA = 0x06;                                                    //Allows cursor to move to the right, no shifting
+	LCD_Write_Command();                                            //Implements changes
+	DATA = 0x0F;                                                    //Turns the display on
+	LCD_Write_Command();                                            //Implements changes
+    counter = 0;                                                    //Sets counter to 0 for finite loop
+	while (counter <= 53)                                           //Runs finite loop (53 is decided experimentally)
 	{
-		counter++;
-		if (counter >= COUNTER_MAX)
-		{
-
-			for (i = 0; i < LCD_LINE_SIZE; i++)
+		counter++;                                                  //Increments the counter
+		
+			for (i = 0; i < LCD_LINE_SIZE; i++)                     //Loop to determine which characters to display using offset
 			{
-				message_view[i] = MS7[offset + i];
+				message_view[i] = MS7[offset + i];                  //Determines the range of characters for message (Scrolling effect)
 			}
-			message_view[LCD_LINE_SIZE] = '\0';
-			DATA = 0x01;
-			LCD_Write_Command();
+			message_view[LCD_LINE_SIZE] = '\0';                     //Null terminator required for string characters
+			DATA = 0x01;                                            //Prepares the display to be cleared
+			LCD_Write_Command();                                    //Implement display configuration
 
-			DATA = 0x02;
-			LCD_Write_Command();
+			DATA = 0x02;                                            //Prepares the cursor to return home
+			LCD_Write_Command();                                    //Implement display configuration
 
-			LCD_Puts(message_view);
+			LCD_Puts(message_view);                                 //Prints the message with offset
 
-			offset++;
+			offset++;                                               //Increment offset for the next character
 
-			if (offset >= OFFSET_MAX)
+			if (offset >= OFFSET_MAX)                               //Check if offset is out of bounds
 			{
-				offset = 0;
-			}
-		}
-
+				offset = 0;                                         //If it is reset offset
+			}  
 	}
+    offset = 0;                                                     //Reset offset at the end to prepare for next call
 }
 
 void ADC(void)
