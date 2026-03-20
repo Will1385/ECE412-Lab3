@@ -1,4 +1,4 @@
- // Lab3P1.s
+ // Assembler1.s
  //
  // 
  // Author : Eugene Rockey
@@ -69,7 +69,7 @@ Mega328P_Init:
 		sts	UCSR0C,r16		//UCSR0C = r16 = 6 = 00000110
 						//Sets the data size to 8 bits, parity to none, and 1 stop bit (p288)
 		
-		;initialize ADC - covered in Part 2 by Kang
+		;initialize ADC
 		ldi	r16,0xE7		//r16 = 0xE7
 		sts	ADCSRA,r16		//ADCSRA = r16 = 0xE7 = 11100111. Bit 5, ADATE, is activated. This turns on autotrigger for free running mode
 						//Enables ADC and set the ADC division factor to 128 (p354).
