@@ -120,6 +120,7 @@ void LCD(void)
 
 void ADC(void)
 {
+	while(1){
 	ADC_Get();
 
 	Acc = (((int)(HADC & 0b11)) << 8) | ((int)LADC); //Read the voltage of the thermistor
@@ -160,10 +161,14 @@ void ADC(void)
 
 	ASCII = (temp_frac / 10) + '0';
 	UART_Put();		//Print the number in first digit place
-	ASCII = (temp_frac % 10) + '0';
-	UART_Put();		//Print the number in second digit place
 
 	UART_Puts(" C   "); //Print "C" as "Celsius"
+	counter = 0;
+	while (counter < 10000000)
+    {
+        counter++;
+    }
+	}
 }
 //Each digit will be calculated, sent into ASCII encoder, then print out in order
 
